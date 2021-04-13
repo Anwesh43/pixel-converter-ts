@@ -73,6 +73,7 @@ class State {
     startUpdating(cb : Function) {
         if (this.dir == 0) {
             this.dir = 1 - 2 * this.prevScale 
+            cb()
         }
     }
 }
@@ -132,8 +133,18 @@ class PixelImage {
 
     state : State = new State()
 
-    constructor(private i : number) {
+    next : PixelImage 
+    prev : PixelImage 
 
+    constructor(private i : number) {
+        this.addNeighbor()
+    }
+
+    addNeighbor() {
+        if (this.i < 5) {
+            this.next = new PixelImage(this.i + 1)
+            this.next.prev = this 
+        }
     }
 
     draw(context : CanvasRenderingContext2D) {
@@ -147,4 +158,42 @@ class PixelImage {
     startUpdating(cb : Function) {
         this.state.startUpdating(cb)
     }
+
+    getNext(dir : number, cb : Function) : PixelImage {
+        var curr : PixelImage = this.next 
+        if (dir == -1) {
+            curr = this.prev 
+        }
+        if (curr) {
+            return curr 
+        }
+        cb()
+        return this 
+    }
+}
+
+class Renderer {
+
+    curr : PixelImage = new PixelImage(1)
+    animator : Animator = new Animator()
+    dir : number = 1 
+    render(context : CanvasRenderingContext2D) {
+        this.curr.draw(context)
+    }
+
+    handleTap(cb : Function) {
+        this.curr.startUpdating(() => {
+            this.animator.start(() => {
+                cb()
+                this.curr.update(() => {
+                    this.animator.stop()
+                    cb()
+                    this.curr = this.curr.getNext(this.dir, () => {
+                        this.dir *= -1
+                    })
+                })
+            })
+        })
+    }
+
 }

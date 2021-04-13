@@ -38,7 +38,7 @@ for (var j = 1; j < 6; j++) {
 
 class DrawingUtil {
 
-    static drawPixelImage(context : CanvasRenderingContext2D, images : Array<HTMLImageElement>, i : number, scale : number) {
+    static drawPixelImage(context : CanvasRenderingContext2D, i : number, scale : number) {
         const size : number = Math.min(w, h) / sizeFactor 
         const pixel1 : Uint8ClampedArray = pixelContainer.getPixels(i)
         const pixel2 : Uint8ClampedArray = pixelContainer.getPixels(i)
@@ -125,5 +125,26 @@ class Stage {
         stage.initCanvas()
         stage.render()
         stage.handleTap()
+    }
+}
+
+class PixelImage {
+
+    state : State = new State()
+
+    constructor(private i : number) {
+
+    }
+
+    draw(context : CanvasRenderingContext2D) {
+        DrawingUtil.drawPixelImage(context, this.i, this.state.scale)
+    }
+
+    update(cb : Function) {
+        this.state.update(cb)
+    }
+
+    startUpdating(cb : Function) {
+        this.state.startUpdating(cb)
     }
 }

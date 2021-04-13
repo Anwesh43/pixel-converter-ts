@@ -1,10 +1,11 @@
 const w : number = window.innerWidth 
 const h : number = window.innerHeight 
-const scGap : number = 0.02 
+const scGap : number = 0.02
 const delay : number = 20 
 const sizeFactor : number = 2 
 const imageFactor : string = `car`;
 const size : number = Math.min(w, h) / sizeFactor
+const total : number = 5
 
 class PixelContainer {
 
@@ -22,34 +23,43 @@ class PixelContainer {
             const imageData : ImageData  = context.getImageData(0, 0, size, size)
             this.pixels.push(imageData.data)
             console.log("img", imageData.data)
+            if (this.pixels.length == total) {
+                Stage.init()
+            }
         }
     }
 
     getPixels(i : number) : Uint8ClampedArray {
         return this.pixels[i]
     }
+    loaded() {
+        return this.pixels.length == total 
+    }
 }
 
 const pixelContainer : PixelContainer = new PixelContainer()
 
-for (var j = 1; j < 6; j++) {
+for (var j = 1; j <= total; j++) {
     pixelContainer.loadImage(j)
 }
 
 class DrawingUtil {
 
     static drawPixelImage(context : CanvasRenderingContext2D, i : number, scale : number) {
+        if (!pixelContainer.loaded()) {
+            return 
+        }
         const size : number = Math.min(w, h) / sizeFactor 
         const pixel1 : Uint8ClampedArray = pixelContainer.getPixels(i)
-        const pixel2 : Uint8ClampedArray = pixelContainer.getPixels(i)
+        const pixel2 : Uint8ClampedArray = pixelContainer.getPixels(i + 1)
         const imageData : ImageData = context.getImageData(0, 0, size, size)
         const data = imageData.data;
-        for (var j = 0; j < pixel1.length; j++) {
-            data[j] = pixel1[j] + (pixel2[j] - pixel1[j]) * scale 
-            data[j + 1] = pixel1[j + 1] + (pixel2[j + 1] - pixel1[j + 1]) * scale
-            data[j + 2] = pixel1[j + 2] + (pixel2[j + 2] - pixel1[j + 2]) * scale
+        for (var j = 0; j < pixel1.length; j+=4) {
+            data[j] = Math.floor(pixel1[j] + (pixel2[j] - pixel1[j]) * scale) 
+            data[j + 1] = Math.floor(pixel1[j + 1] + (pixel2[j + 1] - pixel1[j + 1]) * scale)
+            data[j + 2] = Math.floor(pixel1[j + 2] + (pixel2[j + 2] - pixel1[j + 2]) * scale)
         }
-         
+        console.log(scale)
         context.putImageData(imageData, 0, 0)
     }
 }
@@ -130,6 +140,7 @@ class Stage {
         stage.initCanvas()
         stage.render()
         stage.handleTap()
+        
     }
 }
 
@@ -145,7 +156,7 @@ class PixelImage {
     }
 
     addNeighbor() {
-        if (this.i < 5) {
+        if (this.i < total - 2) {
             this.next = new PixelImage(this.i + 1)
             this.next.prev = this 
         }
